@@ -1,208 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-// Preferências em português de Portugal
-const GOALS = [
-  { value: '', label: 'Selecionar objetivo' },
-  { value: 'lose', label: 'Perder peso' },
-  { value: 'maintain', label: 'Manter peso' },
-  { value: 'gain', label: 'Ganhar peso' },
-];
-
-const DIET_TYPES = [
-  { value: '', label: 'Selecionar tipo de dieta' },
-  { value: 'omnivore', label: 'Omnívora' },
-  { value: 'vegetarian', label: 'Vegetariana' },
-  { value: 'vegan', label: 'Vegana' },
-  { value: 'pescatarian', label: 'Pescetariana' },
-];
-
-const DIAS_SEMANA = [
-  'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'
-];
-
-const MEAL_TYPES = [
-  { key: 'breakfast', label: 'PA' },
-  { key: 'snack1', label: 'LM' },
-  { key: 'lunch', label: 'Almoço' },
-  { key: 'snack2', label: 'LT' },
-  { key: 'dinner', label: 'Jantar' }
-];
-
-const MEALS = [
-  { name: 'Papas de Aveia com Frutos Vermelhos', type: 'breakfast', tags: ['vegetarian', 'high fiber'] },
-  { name: 'Iogurte Grego com Granola', type: 'breakfast', tags: ['vegetarian', 'high protein'] },
-  { name: 'Ovos Mexidos com Torrada', type: 'breakfast', tags: ['omnivore', 'high protein'] },
-  { name: 'Taça de Smoothie Vegan', type: 'breakfast', tags: ['vegan'] },
-  { name: 'Tosta de Abacate', type: 'breakfast', tags: ['vegetarian'] },
-  // Snacks
-  { name: 'Maçã com Manteiga de Amendoim', type: 'snack', tags: ['vegetarian', 'vegan'] },
-  { name: 'Barra de Proteína', type: 'snack', tags: ['omnivore', 'vegetarian', 'high protein'] },
-  { name: 'Palitos de Cenoura com Húmus', type: 'snack', tags: ['vegan', 'vegetarian'] },
-  { name: 'Ovo Cozido', type: 'snack', tags: ['omnivore', 'high protein'] },
-  { name: 'Mix de Frutos Secos', type: 'snack', tags: ['vegetarian', 'vegan'] },
-  // Lunches
-  { name: 'Salada de Frango Grelhado', type: 'lunch', tags: ['omnivore', 'high protein'] },
-  { name: 'Taça de Quinoa e Feijão Preto', type: 'lunch', tags: ['vegan', 'vegetarian', 'high fiber'] },
-  { name: 'Sandes de Peru', type: 'lunch', tags: ['omnivore'] },
-  { name: 'Sopa de Lentilhas', type: 'lunch', tags: ['vegan', 'vegetarian', 'high fiber'] },
-  { name: 'Salada Caprese', type: 'lunch', tags: ['vegetarian'] },
-  // Dinners
-  { name: 'Salmão com Legumes', type: 'dinner', tags: ['pescatarian', 'omnivore', 'high protein'] },
-  { name: 'Tofu Salteado com Arroz', type: 'dinner', tags: ['vegan', 'vegetarian'] },
-  { name: 'Salteado de Vaca', type: 'dinner', tags: ['omnivore', 'high protein'] },
-  { name: 'Caril de Legumes', type: 'dinner', tags: ['vegan', 'vegetarian'] },
-  { name: 'Beringela à Parmegiana', type: 'dinner', tags: ['vegetarian'] },
-  // More snacks
-  { name: 'Queijo Fresco com Ananás', type: 'snack', tags: ['vegetarian', 'high protein'] },
-  { name: 'Tortas de Arroz com Manteiga de Amêndoa', type: 'snack', tags: ['vegan', 'vegetarian'] },
-  { name: 'Edamame', type: 'snack', tags: ['vegan', 'vegetarian', 'high protein'] },
-  { name: 'Iogurte com Granola', type: 'snack', tags: ['vegetarian'] },
-  { name: 'Salada de Fruta', type: 'snack', tags: ['vegan', 'vegetarian'] },
-  // More lunches/dinners
-  { name: 'Salada de Grão-de-bico', type: 'lunch', tags: ['vegan', 'vegetarian', 'high fiber'] },
-  { name: 'Tacos de Camarão', type: 'lunch', tags: ['pescatarian', 'omnivore'] },
-  { name: 'Salteado de Frango', type: 'dinner', tags: ['omnivore', 'high protein'] },
-  { name: 'Pimentos Recheados', type: 'dinner', tags: ['vegetarian'] },
-  { name: 'Chili Vegan', type: 'dinner', tags: ['vegan', 'vegetarian', 'high fiber'] },
-];
+import { MEALS, MEAL_DETAILS } from './meals';
+import { DIAS_SEMANA, MEAL_TYPES, GOALS, DIET_TYPES } from './userPreferences';
 
 const STORAGE_KEY = 'meepla-user-preferences';
 const PLAN_KEY = 'meepla-weekly-plan';
-
-// Mock ingredients and recipes for each meal
-const MEAL_DETAILS: Record<string, { ingredientes: string[]; receita: string }> = {
-  'Papás de Aveia com Frutos Vermelhos': {
-    ingredientes: ['Aveia', 'Leite', 'Frutos vermelhos', 'Mel'],
-    receita: 'Cozinhe a aveia com leite, adicione frutos vermelhos e mel por cima.'
-  },
-  'Iogurte Grego com Granola': {
-    ingredientes: ['Iogurte grego', 'Granola', 'Mel', 'Fruta a gosto'],
-    receita: 'Coloque o iogurte numa taça, adicione granola, fruta e mel.'
-  },
-  'Ovos Mexidos com Torrada': {
-    ingredientes: ['Ovos', 'Pão', 'Sal', 'Pimenta', 'Azeite'],
-    receita: 'Bata os ovos, tempere e cozinhe em azeite. Sirva com pão torrado.'
-  },
-  'Taça de Smoothie Vegan': {
-    ingredientes: ['Banana', 'Leite vegetal', 'Frutos vermelhos', 'Sementes de chia'],
-    receita: 'Bata tudo no liquidificador e sirva numa taça com sementes por cima.'
-  },
-  'Tosta de Abacate': {
-    ingredientes: ['Pão', 'Abacate', 'Limão', 'Sal', 'Pimenta'],
-    receita: 'Esmague o abacate, tempere e coloque sobre o pão torrado.'
-  },
-  'Maçã com Manteiga de Amendoim': {
-    ingredientes: ['Maçã', 'Manteiga de amendoim'],
-    receita: 'Corte a maçã em fatias e barre com manteiga de amendoim.'
-  },
-  'Barra de Proteína': {
-    ingredientes: ['Barra de proteína (industrializada ou caseira)'],
-    receita: 'Consumir diretamente.'
-  },
-  'Palitos de Cenoura com Húmus': {
-    ingredientes: ['Cenoura', 'Húmus'],
-    receita: 'Corte a cenoura em palitos e mergulhe no húmus.'
-  },
-  'Ovo Cozido': {
-    ingredientes: ['Ovo', 'Sal'],
-    receita: 'Coza o ovo em água durante 8-10 minutos.'
-  },
-  'Mix de Frutos Secos': {
-    ingredientes: ['Frutos secos variados'],
-    receita: 'Misture os frutos secos numa taça.'
-  },
-  'Salada de Frango Grelhado': {
-    ingredientes: ['Frango grelhado', 'Alface', 'Tomate', 'Azeite', 'Sal'],
-    receita: 'Misture o frango cortado com os vegetais e tempere a gosto.'
-  },
-  'Taça de Quinoa e Feijão Preto': {
-    ingredientes: ['Quinoa', 'Feijão preto', 'Milho', 'Pimentos', 'Coentros'],
-    receita: 'Cozinhe a quinoa, misture com os restantes ingredientes e sirva.'
-  },
-  'Sandes de Peru': {
-    ingredientes: ['Pão', 'Peito de peru', 'Alface', 'Tomate'],
-    receita: 'Monte a sandes com todos os ingredientes.'
-  },
-  'Sopa de Lentilhas': {
-    ingredientes: ['Lentilhas', 'Cenoura', 'Cebola', 'Azeite', 'Sal'],
-    receita: 'Cozinhe tudo até ficar macio e triture se desejar.'
-  },
-  'Salada Caprese': {
-    ingredientes: ['Mozzarella', 'Tomate', 'Manjericão', 'Azeite'],
-    receita: 'Monte camadas de tomate e mozzarella, tempere com azeite e manjericão.'
-  },
-  'Salmão com Legumes': {
-    ingredientes: ['Salmão', 'Legumes variados', 'Azeite', 'Sal', 'Limão'],
-    receita: 'Grelhe o salmão e os legumes, tempere com limão e azeite.'
-  },
-  'Tofu Salteado com Arroz': {
-    ingredientes: ['Tofu', 'Arroz', 'Legumes', 'Molho de soja'],
-    receita: 'Salteie o tofu e legumes, sirva com arroz cozido.'
-  },
-  'Salteado de Vaca': {
-    ingredientes: ['Carne de vaca', 'Legumes', 'Molho de soja', 'Arroz'],
-    receita: 'Salteie a carne e legumes, sirva com arroz.'
-  },
-  'Caril de Legumes': {
-    ingredientes: ['Legumes variados', 'Leite de coco', 'Caril em pó'],
-    receita: 'Cozinhe os legumes com leite de coco e caril.'
-  },
-  'Beringela à Parmegiana': {
-    ingredientes: ['Beringela', 'Molho de tomate', 'Queijo', 'Oregãos'],
-    receita: 'Monte camadas de beringela, molho e queijo, leve ao forno.'
-  },
-  'Queijo Fresco com Ananás': {
-    ingredientes: ['Queijo fresco', 'Ananás'],
-    receita: 'Corte o ananás e sirva com queijo fresco.'
-  },
-  'Tortas de Arroz com Manteiga de Amêndoa': {
-    ingredientes: ['Tortas de arroz', 'Manteiga de amêndoa'],
-    receita: 'Barre as tortas com manteiga de amêndoa.'
-  },
-  'Edamame': {
-    ingredientes: ['Edamame', 'Sal'],
-    receita: 'Coza o edamame e tempere com sal.'
-  },
-  'Iogurte com Granola': {
-    ingredientes: ['Iogurte', 'Granola', 'Fruta a gosto'],
-    receita: 'Misture tudo numa taça.'
-  },
-  'Salada de Fruta': {
-    ingredientes: ['Fruta variada'],
-    receita: 'Corte a fruta e misture numa taça.'
-  },
-  'Salada de Grão-de-bico': {
-    ingredientes: ['Grão-de-bico', 'Tomate', 'Cebola', 'Azeite'],
-    receita: 'Misture todos os ingredientes e tempere a gosto.'
-  },
-  'Tacos de Camarão': {
-    ingredientes: ['Tortilhas', 'Camarão', 'Alface', 'Molho'],
-    receita: 'Salteie o camarão, monte os tacos com os restantes ingredientes.'
-  },
-  'Salteado de Frango': {
-    ingredientes: ['Frango', 'Legumes', 'Molho de soja', 'Arroz'],
-    receita: 'Salteie o frango e legumes, sirva com arroz.'
-  },
-  'Pimentos Recheados': {
-    ingredientes: ['Pimentos', 'Arroz', 'Carne ou legumes', 'Queijo'],
-    receita: 'Recheie os pimentos e leve ao forno.'
-  },
-  'Chili Vegan': {
-    ingredientes: ['Feijão', 'Tomate', 'Milho', 'Pimentos', 'Especiarias'],
-    receita: 'Cozinhe tudo junto até engrossar.'
-  },
-  // fallback
-  'Sem sugestão': {
-    ingredientes: [],
-    receita: 'Sem receita disponível.'
-  },
-  '🍽️ Refeição livre': {
-    ingredientes: [],
-    receita: 'Escolha o que mais lhe apetecer nesta refeição!'
-  }
-};
 
 function getDietTags(diet: string) {
   switch (diet) {
@@ -228,18 +31,128 @@ function getRandomMeal(meals: any[], type: string, used: Set<string>) {
 }
 
 function getFreeMealSlot(plan: string[][]): [number, number] | null {
-  // Only allow lunch (2) or dinner (4) as free meal
+  // Only allow lunch (2) or dinner (4) as free meal, but not Sunday lunch (6,2)
   const mealIndexes = [2, 4]; // lunch, dinner
   const totalCols = DIAS_SEMANA.length;
   const slots: [number, number][] = [];
   for (let row of mealIndexes) {
     for (let col = 0; col < totalCols; col++) {
-      slots.push([col, row]);
+      // Exclude Sunday lunch
+      if (!(col === 6 && row === 2)) {
+        slots.push([col, row]);
+      }
     }
   }
   if (slots.length === 0) return null;
   const idx = Math.floor(Math.random() * slots.length);
   return slots[idx];
+}
+
+function generateWeeklyPlan(filteredMeals: any[]) {
+  // Helper to get meals by type
+  const getMealsByType = (type: string) => filteredMeals.filter(m => m.type === type);
+
+  // 1. Dinners: all different
+  const dinnerMeals = getMealsByType('dinner');
+  let dinners: string[] = [];
+  if (dinnerMeals.length >= 7) {
+    dinners = dinnerMeals
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 7)
+      .map(m => m.name);
+  } else {
+    dinners = [...dinnerMeals.map(m => m.name)];
+    while (dinners.length < 7) dinners.push('Sem sugestão');
+  }
+
+  // 2. Lunches: at least 2 are leftovers from previous dinner, rest random (not same as dinner)
+  const lunchMeals = getMealsByType('lunch');
+  let lunches: string[] = [];
+  const leftoverDays = new Set<number>();
+  while (leftoverDays.size < 2) {
+    const day = Math.floor(Math.random() * 6) + 1; // days 1-6 (Mon-Sat), avoid Sunday
+    leftoverDays.add(day);
+  }
+  for (let i = 0; i < 7; i++) {
+    if (leftoverDays.has(i)) {
+      lunches.push(dinners[i - 1] || 'Sem sugestão');
+    } else {
+      const options = lunchMeals.filter(m => m.name !== dinners[i]);
+      if (options.length > 0) {
+        lunches.push(options[Math.floor(Math.random() * options.length)].name);
+      } else {
+        lunches.push('Sem sugestão');
+      }
+    }
+  }
+
+  // 3. Snacks: can only repeat once per week (max 2x per snack)
+  const snackMeals = getMealsByType('snack');
+  let snackPool = [...snackMeals.map(m => m.name)];
+  let snackCounts: Record<string, number> = {};
+  const pickSnack = () => {
+    const available = snackPool.filter(snack => (snackCounts[snack] || 0) < 2);
+    if (available.length === 0) return 'Sem sugestão';
+    const snack = available[Math.floor(Math.random() * available.length)];
+    snackCounts[snack] = (snackCounts[snack] || 0) + 1;
+    return snack;
+  };
+
+  // 4. Breakfasts: can only repeat once per week (max 2x per breakfast)
+  const breakfastMeals = getMealsByType('breakfast');
+  let breakfastCounts: Record<string, number> = {};
+  const pickBreakfast = () => {
+    const available = breakfastMeals.filter(m => (breakfastCounts[m.name] || 0) < 2);
+    if (available.length === 0) return 'Sem sugestão';
+    const breakfast = available[Math.floor(Math.random() * available.length)].name;
+    breakfastCounts[breakfast] = (breakfastCounts[breakfast] || 0) + 1;
+    return breakfast;
+  };
+
+  // 5. Ceia: random snack
+  const pickCeia = pickSnack;
+
+  // Build week plan
+  const week: string[][] = [];
+  for (let day = 0; day < 7; day++) {
+    const used = new Set<string>();
+    const dayMeals: string[] = [];
+    // Pequeno-almoço
+    const breakfast = pickBreakfast();
+    dayMeals.push(breakfast);
+    used.add(breakfast);
+
+    // Lanche da manhã
+    const snack1 = pickSnack();
+    dayMeals.push(snack1);
+    used.add(snack1);
+
+    // Almoço
+    let lunch = lunches[day];
+    // Make Sunday lunch always a free meal
+    if (day === 6) {
+      lunch = '🍽️ Refeição livre';
+    }
+    dayMeals.push(lunch);
+    used.add(lunch);
+
+    // Lanche da tarde
+    const snack2 = pickSnack();
+    dayMeals.push(snack2);
+    used.add(snack2);
+
+    // Jantar
+    const dinner = dinners[day];
+    dayMeals.push(dinner);
+    used.add(dinner);
+
+    // Ceia
+    const snack3 = pickCeia();
+    dayMeals.push(snack3);
+
+    week.push(dayMeals);
+  }
+  return week;
 }
 
 export default function Home() {
@@ -252,6 +165,7 @@ export default function Home() {
 
   // Dialog state
   const [dialog, setDialog] = useState<{ open: boolean; meal: string }>({ open: false, meal: '' });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -269,6 +183,7 @@ export default function Home() {
     if (storedFreeSlot) {
       setFreeSlot(JSON.parse(storedFreeSlot));
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -277,18 +192,10 @@ export default function Home() {
       const filteredMeals = MEALS.filter(m =>
         m.tags.some((tag: string) => tags.includes(tag))
       );
-      const week: string[][] = [];
-      for (let day = 0; day < 7; day++) {
-        const used = new Set<string>();
-        const dayMeals: string[] = [];
-        for (const mealType of MEAL_TYPES) {
-          const type = mealType.key.startsWith('snack') ? 'snack' : mealType.key;
-          const meal = getRandomMeal(filteredMeals, type, used) || 'Sem sugestão';
-          dayMeals.push(meal);
-        }
-        week.push(dayMeals);
-      }
-      // Pick a free meal slot
+      // Generate plan with new rules
+      let week = generateWeeklyPlan(filteredMeals);
+
+      // Pick a free meal slot (lunch or dinner)
       const slot = getFreeMealSlot(week);
       if (slot) {
         week[slot[0]][slot[1]] = '🍽️ Refeição livre';
@@ -306,18 +213,9 @@ export default function Home() {
     const filteredMeals = MEALS.filter(m =>
       m.tags.some((tag: string) => tags.includes(tag))
     );
-    const week: string[][] = [];
-    for (let day = 0; day < 7; day++) {
-      const used = new Set<string>();
-      const dayMeals: string[] = [];
-      for (const mealType of MEAL_TYPES) {
-        const type = mealType.key.startsWith('snack') ? 'snack' : mealType.key;
-        const meal = getRandomMeal(filteredMeals, type, used) || 'Sem sugestão';
-        dayMeals.push(meal);
-      }
-      week.push(dayMeals);
-    }
-    // Pick a new free meal slot
+    let week = generateWeeklyPlan(filteredMeals);
+
+    // Pick a new free meal slot (lunch or dinner)
     const slot = getFreeMealSlot(week);
     if (slot) {
       week[slot[0]][slot[1]] = '🍽️ Refeição livre';
@@ -370,10 +268,26 @@ export default function Home() {
     setSubmitted(false);
   };
 
+  const handleReset = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(PLAN_KEY);
+    localStorage.removeItem('meepla-free-slot');
+    setGoal('');
+    setDiet('');
+    setPlan([]);
+    setFreeSlot(null);
+    setSubmitted(false);
+    setErrors({});
+  };
+
+  if (loading) {
+    return null; // or a spinner if you prefer
+  }
+
   return (
     <main className="min-h-screen w-full bg-[#181c23] text-[#e0e3e8] flex flex-col items-center justify-center p-0 sm:p-4 transition-colors">
       <div className="w-full max-w-7xl flex flex-col flex-1 h-screen sm:h-auto sm:rounded-lg shadow-lg bg-[#232733] p-0 sm:p-8 overflow-auto">
-        <h1 className="text-2xl font-bold mb-6 mt-6 sm:mt-0 text-center text-[#e0e3e8]">Bem-vindo!</h1>
+        <h1 className="text-2xl font-bold mb-6 mt-6 sm:mt-0 text-center text-[#e0e3e8]">O seu plano desta semana!</h1>
         {submitted ? (
           <div className="font-semibold space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -386,17 +300,17 @@ export default function Home() {
                   <span className="font-medium">Dieta:</span> {DIET_TYPES.find(d => d.value === diet)?.label}
                 </div>
               </div>
-              <button
-                className="bg-[#31364a] text-[#e0e3e8] py-2 px-4 rounded hover:bg-[#3b4252] transition"
-                onClick={handleEdit}
-                type="button"
-              >
-                Editar Preferências
-              </button>
             </div>
             <div className="mt-8">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-bold text-[#e0e3e8]">O Seu Plano Semanal de Refeições</h2>
+              <div className="flex items-center justify-end mb-2 gap-2">
+                <button
+                  className="bg-[#f87171] text-[#232733] px-3 py-1 rounded hover:bg-[#fca5a5] text-sm font-semibold transition"
+                  onClick={handleReset}
+                  type="button"
+                  title="Repor Preferências"
+                >
+                  Repor Preferências
+                </button>
                 <button
                   className="bg-[#a3e635] text-[#232733] px-3 py-1 rounded hover:bg-[#b7f072] text-sm font-semibold transition"
                   onClick={regeneratePlan}
@@ -421,7 +335,10 @@ export default function Home() {
                       <tr key={mealType.key} className={mealIdx % 2 === 0 ? 'bg-[#232733]' : 'bg-[#232b3b]'}>
                         <td className="border border-[#31364a] px-2 py-1 font-bold w-[90px]">{mealType.label}</td>
                         {plan.map((dayMeals, dayIdx) => {
-                          const isFree = freeSlot && freeSlot[0] === dayIdx && freeSlot[1] === mealIdx;
+                          // Highlight if it's the free meal slot or Sunday lunch (always free)
+                          const isFree =
+                            (freeSlot && freeSlot[0] === dayIdx && freeSlot[1] === mealIdx) ||
+                            (mealIdx === 2 && dayIdx === 6 && dayMeals[mealIdx] === '🍽️ Refeição livre');
                           return (
                             <td
                               key={dayIdx}
