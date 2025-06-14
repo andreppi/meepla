@@ -167,6 +167,21 @@ export default function Home() {
   const [dialog, setDialog] = useState<{ open: boolean; meal: string }>({ open: false, meal: '' });
   const [loading, setLoading] = useState(true);
 
+  // For collapsible days
+  const [openDays, setOpenDays] = useState<number[]>([]);
+
+  /* // Open today's section by default
+  useEffect(() => {
+    if (submitted && openDays.length === 0) {
+      const today = new Date().getDay(); // 0 (Sunday) - 6 (Saturday)
+      // Our DIAS_SEMANA: 0=Segunda, ..., 6=Domingo
+      // JS: 0=Sunday, 1=Monday, ..., 6=Saturday
+      // Map JS Sunday (0) to 6, Monday (1) to 0, ..., Saturday (6) to 5
+      const appDay = today === 0 ? 6 : today - 1;
+      setOpenDays([appDay]);
+    }
+  }, [submitted, openDays.length]); */
+
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -280,114 +295,115 @@ export default function Home() {
     setErrors({});
   };
 
+  const toggleDay = (idx: number) => {
+    setOpenDays(open =>
+      open.includes(idx) ? open.filter(i => i !== idx) : [...open, idx]
+    );
+  };
+
   if (loading) {
     return null; // or a spinner if you prefer
   }
 
   return (
     <main className="min-h-screen w-full bg-[#181c23] text-[#e0e3e8] flex flex-col items-center justify-center p-0 sm:p-4 transition-colors">
-      <div className="w-full max-w-7xl flex flex-col flex-1 h-screen sm:h-auto sm:rounded-lg shadow-lg bg-[#232733] p-0 sm:p-8 overflow-auto">
-        <h1 className="text-2xl font-bold mb-6 mt-6 sm:mt-0 text-center text-[#e0e3e8]">O seu plano desta semana!</h1>
+      <div className="w-full max-w-2xl flex flex-col flex-1 h-screen sm:h-auto sm:rounded-lg shadow-lg bg-[#232733] p-0 sm:p-8 overflow-auto">
+        <h1 className="text-2xl font-bold mb-6 mt-6 sm:mt-0 text-center text-[#e0e3e8]">Bem-vindo!</h1>
         {submitted ? (
           <div className="font-semibold space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <div className="text-[#a3e635]">Preferências atuais:</div>
-                <div>
-                  <span className="font-medium">Objetivo:</span> {GOALS.find(g => g.value === goal)?.label}
-                </div>
-                <div>
-                  <span className="font-medium">Dieta:</span> {DIET_TYPES.find(d => d.value === diet)?.label}
-                </div>
-              </div>
+            <div className="flex items-center justify-end mb-2 gap-2">
+              <button
+                className="bg-[#f87171] text-[#232733] px-3 py-1 rounded hover:bg-[#fca5a5] text-sm font-semibold transition"
+                onClick={handleReset}
+                type="button"
+                title="Repor Preferências"
+              >
+                Repor Preferências
+              </button>
+              <button
+                className="bg-[#a3e635] text-[#232733] px-3 py-1 rounded hover:bg-[#b7f072] text-sm font-semibold transition"
+                onClick={regeneratePlan}
+                type="button"
+                title="Gerar novo plano semanal"
+              >
+                Gerar novo plano
+              </button>
             </div>
             <div className="mt-8">
-              <div className="flex items-center justify-end mb-2 gap-2">
-                <button
-                  className="bg-[#f87171] text-[#232733] px-3 py-1 rounded hover:bg-[#fca5a5] text-sm font-semibold transition"
-                  onClick={handleReset}
-                  type="button"
-                  title="Repor Preferências"
-                >
-                  Repor Preferências
-                </button>
-                <button
-                  className="bg-[#a3e635] text-[#232733] px-3 py-1 rounded hover:bg-[#b7f072] text-sm font-semibold transition"
-                  onClick={regeneratePlan}
-                  type="button"
-                  title="Gerar novo plano semanal"
-                >
-                  Gerar novo plano
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full border border-[#31364a] text-[#e0e3e8] text-sm bg-[#232733] table-fixed">
-                  <thead>
-                    <tr>
-                      <th className="border border-[#31364a] px-2 py-1 bg-[#232733] w-[90px]">Refeição</th>
-                      {DIAS_SEMANA.map((dia, i) => (
-                        <th key={i} className="border border-[#31364a] px-2 py-1 bg-[#232733] w-[120px]">{dia}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MEAL_TYPES.map((mealType, mealIdx) => (
-                      <tr key={mealType.key} className={mealIdx % 2 === 0 ? 'bg-[#232733]' : 'bg-[#232b3b]'}>
-                        <td className="border border-[#31364a] px-2 py-1 font-bold w-[90px]">{mealType.label}</td>
-                        {plan.map((dayMeals, dayIdx) => {
-                          // Highlight if it's the free meal slot or Sunday lunch (always free)
-                          const isFree =
-                            (freeSlot && freeSlot[0] === dayIdx && freeSlot[1] === mealIdx) ||
-                            (mealIdx === 2 && dayIdx === 6 && dayMeals[mealIdx] === '🍽️ Refeição livre');
-                          return (
-                            <td
-                              key={dayIdx}
-                              className={
-                                `border border-[#31364a] px-2 py-1 group cursor-pointer relative transition w-[120px] max-w-[120px] align-top
-                                ${isFree ? 'bg-gradient-to-br from-[#232733] to-[#a3e635]/30 text-[#a3e635] font-bold ring-[#a3e635] ring-inset shadow-lg' : ''}
-                                `
-                              }
-                              style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}
-                              onClick={() => setDialog({ open: true, meal: dayMeals[mealIdx] })}
-                              title={isFree ? 'Refeição livre' : 'Clique para ver detalhes'}
-                            >
-                              <div className="flex items-center gap-1">
-                                <span
-                                  className={`flex-1 truncate`}
-                                  style={{
-                                    minWidth: 0,
-                                    display: 'block',
-                                    wordBreak: 'break-word',
-                                    whiteSpace: 'normal',
-                                    maxWidth: '100%',
-                                  }}
-                                >
-                                  {dayMeals[mealIdx] || <span className="text-gray-500 italic">—</span>}
-                                </span>
+              <h2 className="text-xl font-bold text-[#e0e3e8] mb-4">O Seu Plano Semanal</h2>
+              <div className="flex flex-col gap-4">
+                {plan.map((meals, dayIdx) => (
+                  <div key={dayIdx} className="relative">
+                    <button
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition
+                        ${openDays.includes(dayIdx)
+                          ? 'bg-[#a3e635]/20 text-[#a3e635]'
+                          : 'bg-[#232b3b] text-[#e0e3e8] hover:bg-[#31364a]'}
+                        font-bold text-lg`}
+                      onClick={() => toggleDay(dayIdx)}
+                      aria-expanded={openDays.includes(dayIdx)}
+                      aria-controls={`day-panel-${dayIdx}`}
+                    >
+                      <span>
+                        {DIAS_SEMANA[dayIdx]}
+                      </span>
+                      <span className="ml-2 text-xl">
+                        {openDays.includes(dayIdx) ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {openDays.includes(dayIdx) && (
+                      <div
+                        id={`day-panel-${dayIdx}`}
+                        className="bg-[#232733] border-l-4 border-[#a3e635] rounded-b-lg px-4 py-3 mt-0"
+                      >
+                        <ol className="space-y-3">
+                          {MEAL_TYPES.map((mealType, mealIdx) => {
+                            const isFree =
+                              (freeSlot && freeSlot[0] === dayIdx && freeSlot[1] === mealIdx) ||
+                              (mealIdx === 2 && dayIdx === 6 && meals[mealIdx] === '🍽️ Refeição livre');
+                            return (
+                              <li
+                                key={mealType.key}
+                                className={`flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded transition
+                                  ${isFree
+                                    ? 'bg-gradient-to-br from-[#232733] to-[#a3e635]/30 text-[#a3e635] font-bold ring-2 ring-[#a3e635] ring-inset shadow-lg'
+                                    : mealIdx % 2 === 0
+                                    ? 'bg-[#232733]'
+                                    : 'bg-[#232b3b]'
+                                  }`}
+                              >
+                                <div className="flex-1">
+                                  <span className="font-semibold">{mealType.label}:</span>{' '}
+                                  <span
+                                    className="cursor-pointer underline decoration-dotted"
+                                    title="Clique para ver detalhes"
+                                    onClick={() => setDialog({ open: true, meal: meals[mealIdx] })}
+                                  >
+                                    {meals[mealIdx] || <span className="text-gray-500 italic">—</span>}
+                                  </span>
+                                </div>
                                 {!isFree && (
                                   <button
                                     type="button"
-                                    className="text-[#a3e635] hover:text-[#b7f072] text-xs px-1"
+                                    className="text-[#a3e635] hover:text-[#b7f072] text-xs px-2 py-1 rounded transition"
                                     title="Trocar sugestão"
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      regenerateMeal(dayIdx, mealIdx);
-                                    }}
+                                    onClick={() => regenerateMeal(dayIdx, mealIdx)}
                                   >
-                                    🔄
+                                    🔄 Trocar
                                   </button>
                                 )}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="text-xs text-gray-400 mt-2">
-                  Clique numa célula para ver ingredientes e receita. <span className="text-[#a3e635] font-bold">Refeição livre</span> é destacada.
-                </div>
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </div>
+                    )}
+        
+                  </div>
+                ))}
+              </div>
+              <div className="text-xs text-gray-400 mt-4">
+                Clique numa refeição para ver ingredientes e receita. <span className="text-[#a3e635] font-bold">Refeição livre</span> é destacada.
               </div>
             </div>
             {/* Dialog */}
