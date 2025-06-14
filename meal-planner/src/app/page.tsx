@@ -35,7 +35,7 @@ function getFreeMealSlot(plan: string[][]): [number, number] | null {
   const mealIndexes = [2, 4]; // lunch, dinner
   const totalCols = DIAS_SEMANA.length;
   const slots: [number, number][] = [];
-  for (let row of mealIndexes) {
+  for (const row of mealIndexes) {
     for (let col = 0; col < totalCols; col++) {
       // Exclude Sunday lunch
       if (!(col === 6 && row === 2)) {
@@ -67,7 +67,7 @@ function generateWeeklyPlan(filteredMeals: any[]) {
 
   // 2. Lunches: at least 2 are leftovers from previous dinner, rest random (not same as dinner)
   const lunchMeals = getMealsByType('lunch');
-  let lunches: string[] = [];
+  const lunches: string[] = [];
   const leftoverDays = new Set<number>();
   while (leftoverDays.size < 2) {
     const day = Math.floor(Math.random() * 6) + 1; // days 1-6 (Mon-Sat), avoid Sunday
@@ -88,8 +88,8 @@ function generateWeeklyPlan(filteredMeals: any[]) {
 
   // 3. Snacks: can only repeat once per week (max 2x per snack)
   const snackMeals = getMealsByType('snack');
-  let snackPool = [...snackMeals.map(m => m.name)];
-  let snackCounts: Record<string, number> = {};
+  const snackPool = [...snackMeals.map(m => m.name)];
+  const snackCounts: Record<string, number> = {};
   const pickSnack = () => {
     const available = snackPool.filter(snack => (snackCounts[snack] || 0) < 2);
     if (available.length === 0) return 'Sem sugestão';
@@ -100,7 +100,7 @@ function generateWeeklyPlan(filteredMeals: any[]) {
 
   // 4. Breakfasts: can only repeat once per week (max 2x per breakfast)
   const breakfastMeals = getMealsByType('breakfast');
-  let breakfastCounts: Record<string, number> = {};
+  const breakfastCounts: Record<string, number> = {};
   const pickBreakfast = () => {
     const available = breakfastMeals.filter(m => (breakfastCounts[m.name] || 0) < 2);
     if (available.length === 0) return 'Sem sugestão';
@@ -193,7 +193,7 @@ export default function Home() {
         m.tags.some((tag: string) => tags.includes(tag))
       );
       // Generate plan with new rules
-      let week = generateWeeklyPlan(filteredMeals);
+      const week = generateWeeklyPlan(filteredMeals);
 
       // Pick a free meal slot (lunch or dinner)
       const slot = getFreeMealSlot(week);
@@ -213,7 +213,7 @@ export default function Home() {
     const filteredMeals = MEALS.filter(m =>
       m.tags.some((tag: string) => tags.includes(tag))
     );
-    let week = generateWeeklyPlan(filteredMeals);
+    const week = generateWeeklyPlan(filteredMeals);
 
     // Pick a new free meal slot (lunch or dinner)
     const slot = getFreeMealSlot(week);
